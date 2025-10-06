@@ -183,7 +183,7 @@ export const performGlobalpingTest = async (
     const result = measurement.data.results[0].result as FinishedPingTestResult;
     const responseTime = result.stats.avg || 0;
     let status: "up" | "down" | "degraded" = "up";
-    if (result.timings.length === 0) {
+    if (!result.timings?.length) {
       status = "down";
     } else if (responseTime > (site.maxResponseTime || 60000)) {
       status = "degraded";
