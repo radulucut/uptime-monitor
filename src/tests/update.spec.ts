@@ -125,6 +125,12 @@ describe("performGlobalpingTest", () => {
           {
             result: {
               statusCode: 200,
+              timings: [
+                {
+                  ttl: 123,
+                  rtt: 500,
+                },
+              ],
               stats: {
                 avg: 500,
               },
@@ -186,10 +192,22 @@ describe("performGlobalpingTest", () => {
     const expectedAwaitResponse = {
       ok: true,
       data: {
+        timings: [
+          {
+            ttl: 123,
+            rtt: 500,
+          },
+        ],
         results: [
           {
             result: {
               statusCode: 200,
+              timings: [
+                {
+                  ttl: 123,
+                  rtt: 500,
+                },
+              ],
               stats: {
                 avg: 5.44,
               },
@@ -224,6 +242,72 @@ describe("performGlobalpingTest", () => {
       },
       responseTime: "5",
       status: "up",
+    });
+  });
+
+  it("should return 'down' status when ping measurement has no timings", async () => {
+    const site: UpptimeConfig["sites"][number] = {
+      name: "Test Site",
+      url: "example.com",
+      type: "globalping",
+      location: "US",
+      check: "icmp-ping",
+      ipv6: true,
+    };
+
+    const expectedCreateResponse = {
+      ok: true,
+      data: {
+        id: "measurement-123",
+      },
+      response: {
+        status: 200,
+      },
+    };
+    createMeasurementMock.mock.mockImplementation(() => expectedCreateResponse);
+
+    const expectedAwaitResponse = {
+      ok: true,
+      data: {
+        results: [
+          {
+            result: {
+              statusCode: 200,
+              timings: [],
+              stats: {
+                avg: 500,
+              },
+            },
+          },
+        ],
+      },
+    };
+    awaitMeasurementMock.mock.mockImplementation(() => expectedAwaitResponse);
+
+    const result = await performGlobalpingTest(site, mockGlobalping);
+
+    assert.strictEqual(createMeasurementMock.mock.calls.length, 1);
+    assert.deepStrictEqual(createMeasurementMock.mock.calls[0].arguments[0], {
+      type: "ping",
+      target: "example.com",
+      inProgressUpdates: false,
+      limit: 1,
+      locations: [{ magic: "US" }],
+      measurementOptions: {
+        protocol: "ICMP",
+        ipVersion: 6,
+      },
+    });
+
+    assert.strictEqual(awaitMeasurementMock.mock.calls.length, 1);
+    assert.strictEqual(awaitMeasurementMock.mock.calls[0].arguments[0], "measurement-123");
+
+    assert.deepStrictEqual(result, {
+      result: {
+        httpCode: 200,
+      },
+      responseTime: "500",
+      status: "down",
     });
   });
 
@@ -388,6 +472,12 @@ describe("performGlobalpingTest", () => {
           {
             result: {
               statusCode: 200,
+              timings: [
+                {
+                  ttl: 123,
+                  rtt: 500,
+                },
+              ],
               stats: {
                 avg: 1000,
               },
@@ -623,6 +713,12 @@ describe("performGlobalpingTest", () => {
           {
             result: {
               statusCode: 200,
+              timings: [
+                {
+                  ttl: 123,
+                  rtt: 500,
+                },
+              ],
               stats: {
                 avg: 10,
               },
