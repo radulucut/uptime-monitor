@@ -180,10 +180,23 @@ export const performGlobalpingTest = async (
       return { result: { httpCode: res.response.status }, responseTime: "0", status: "down" };
     }
 
-    const result = measurement.data.results[0].result as FinishedPingTestResult;
+    let result = measurement.data.results[0].result;
+
+    if (result.status !== "finished") {
+      console.log("ERROR: failed to get measurement:", measurement.data);
+      return {
+        result: { httpCode: measurement.response.status },
+        responseTime: "0",
+        status: "down",
+      };
+    }
+
+    result = result as FinishedPingTestResult;
+
     const responseTime = result.stats.avg || 0;
+
     let status: "up" | "down" | "degraded" = "up";
-    if (!result.timings?.length) {
+    if (!result.timings.length) {
       status = "down";
     } else if (responseTime > (site.maxResponseTime || 60000)) {
       status = "degraded";
@@ -251,7 +264,19 @@ export const performGlobalpingTest = async (
     };
   }
 
-  const result = measurement.data.results[0].result as FinishedHttpTestResult;
+  let result = measurement.data.results[0].result ;
+
+  if (result.status !== "finished") {
+    console.log("ERROR: failed to get measurement:", measurement.data);
+    return {
+      result: { httpCode: measurement.response.status },
+      responseTime: "0",
+      status: "down",
+    };
+  }
+
+  result = result as FinishedHttpTestResult;
+
   if (site.check === "ssl") {
     return {
       result: { httpCode: 200 },
@@ -259,6 +284,7 @@ export const performGlobalpingTest = async (
       status: getStatusFromCertificateExpiresAt(result.tls?.expiresAt),
     };
   }
+
   const responseTime = result.timings.total || 0;
   const status = getStatusFromHttpResult(
     site,
