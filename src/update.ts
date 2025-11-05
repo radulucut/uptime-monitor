@@ -185,7 +185,7 @@ export const performGlobalpingTest = async (
     if (result.status !== "finished") {
       console.log("ERROR: failed to get measurement:", measurement.data);
       return {
-        result: { httpCode: measurement.response.status },
+        result: { httpCode: 0 },
         responseTime: "0",
         status: "down",
       };
@@ -269,7 +269,7 @@ export const performGlobalpingTest = async (
   if (result.status !== "finished") {
     console.log("ERROR: failed to get measurement:", measurement.data);
     return {
-      result: { httpCode: measurement.response.status },
+      result: { httpCode: 0 },
       responseTime: "0",
       status: "down",
     };

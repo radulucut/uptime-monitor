@@ -48,6 +48,7 @@ describe("performGlobalpingTest", () => {
         results: [
           {
             result: {
+              status: "finished",
               statusCode: 200,
               rawBody: "Test response body",
               timings: {
@@ -124,7 +125,7 @@ describe("performGlobalpingTest", () => {
         results: [
           {
             result: {
-              statusCode: 200,
+              status: "finished",
               timings: [
                 {
                   ttl: 123,
@@ -201,7 +202,7 @@ describe("performGlobalpingTest", () => {
         results: [
           {
             result: {
-              statusCode: 200,
+              status: "finished",
               timings: [
                 {
                   ttl: 123,
@@ -245,7 +246,83 @@ describe("performGlobalpingTest", () => {
     });
   });
 
-  it("should return 'down' status when ping measurement has no timings", async () => {
+  it("should return 'down' status when http measurement failed", async () => {
+    const site: UpptimeConfig["sites"][number] = {
+      name: "Test Site",
+      url: "https://example.com",
+      slug: "test-site",
+      type: "globalping",
+      location: "world",
+      method: "GET",
+      headers: ["Authorization: Bearer token", "Content-Type: application/json"],
+      port: 443,
+      expectedStatusCodes: [200, 201],
+      maxResponseTime: 5000,
+    };
+
+    const expectedCreateResponse = {
+      ok: true,
+      data: {
+        id: "measurement-123",
+      },
+      response: {
+        status: 200,
+      },
+    };
+    createMeasurementMock.mock.mockImplementation(() => expectedCreateResponse);
+
+    const expectedAwaitResponse = {
+      ok: true,
+      data: {
+        results: [
+          {
+            result: {
+              status: "failed",
+            },
+          },
+        ],
+      },
+    };
+    awaitMeasurementMock.mock.mockImplementation(() => expectedAwaitResponse);
+
+    const result = await performGlobalpingTest(site, mockGlobalping);
+
+    assert.strictEqual(createMeasurementMock.mock.calls.length, 1);
+    assert.deepStrictEqual(createMeasurementMock.mock.calls[0].arguments[0], {
+      type: "http",
+      target: "example.com",
+      inProgressUpdates: false,
+      limit: 1,
+      locations: [{ magic: "world" }],
+      measurementOptions: {
+        request: {
+          host: "example.com",
+          path: "/",
+          query: undefined,
+          method: "GET",
+          headers: {
+            Authorization: "Bearer token",
+            "Content-Type": "application/json",
+          },
+        },
+        port: 443,
+        protocol: "HTTPS",
+      },
+    });
+
+    assert.strictEqual(awaitMeasurementMock.mock.calls.length, 1);
+    assert.strictEqual(awaitMeasurementMock.mock.calls[0].arguments[0], "measurement-123");
+
+    assert.deepStrictEqual(result, {
+      result: {
+        httpCode: 0,
+      },
+      responseTime: "0",
+      status: "down",
+    });
+  });
+
+  it("should return 'down' status when ping measurement failed", async () => {
     const site: UpptimeConfig["sites"][number] = {
       name: "Test Site",
       url: "example.com",
@@ -272,11 +349,7 @@ describe("performGlobalpingTest", () => {
         results: [
           {
             result: {
-              statusCode: 200,
-              timings: [],
-              stats: {
-                avg: 500,
-              },
+              status: "failed",
             },
           },
         ],
@@ -304,9 +377,9 @@ describe("performGlobalpingTest", () => {
 
     assert.deepStrictEqual(result, {
       result: {
-        httpCode: 200,
+        httpCode: 0,
       },
-      responseTime: "500",
+      responseTime: "0",
       status: "down",
     });
   });
@@ -337,6 +410,7 @@ describe("performGlobalpingTest", () => {
         results: [
           {
             result: {
+              status: "finished",
               statusCode: 200,
               rawBody: "Slow response",
               timings: {
@@ -392,6 +466,7 @@ describe("performGlobalpingTest", () => {
         results: [
           {
             result: {
+              status: "finished",
               statusCode: 200,
               rawBody: "Test response body",
               timings: {
@@ -471,7 +546,7 @@ describe("performGlobalpingTest", () => {
         results: [
           {
             result: {
-              statusCode: 200,
+              status: "finished",
               timings: [
                 {
                   ttl: 123,
@@ -642,6 +717,7 @@ describe("performGlobalpingTest", () => {
         results: [
           {
             result: {
+              status: "finished",
               statusCode: 200,
               rawBody: "IPv6 response",
               timings: {
@@ -712,6 +788,7 @@ describe("performGlobalpingTest", () => {
         results: [
           {
             result: {
+              status: "finished",
               statusCode: 200,
               timings: [
                 {
@@ -778,6 +855,7 @@ describe("performGlobalpingTest", () => {
         results: [
           {
             result: {
+              status: "finished",
               statusCode: 200,
               rawBody: "Query response",
               timings: {
@@ -846,6 +924,7 @@ describe("performGlobalpingTest", () => {
         results: [
           {
             result: {
+              status: "finished",
               statusCode: 200,
               rawBody: "Response with Error occurred in the content",
               timings: {
