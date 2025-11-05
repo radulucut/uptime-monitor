@@ -80,7 +80,8 @@ function getStatusFromCertificateExpiresAt(expiresAt) {
     // if it expires 7+ days from now then it's OK
     if (!isNaN(expires.getTime()) &&
         expires.toString() !== "Invalid Date" &&
-        expires.getTime() + 604800000 >= Date.now()) {
+        expires.getTime() >= Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days in ms
+    ) {
         return "up";
     }
     return "down";
